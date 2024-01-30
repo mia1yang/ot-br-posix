@@ -284,7 +284,9 @@ void TrelDnssd::OnTrelServiceInstanceAdded(const Mdns::Publisher::DiscoveredInst
     std::string        instanceName = StringUtils::ToLowercase(aInstanceInfo.mName);
     Ip6Address         selectedAddress;
     otPlatTrelPeerInfo peerInfo;
-
+    uint8_t firstBytePos = 8;
+    uint8_t* addrSuffix;
+    bool isAnycast = true;
     // Remove any existing TREL service instance before adding
     OnTrelServiceInstanceRemoved(instanceName);
 
@@ -300,6 +302,27 @@ void TrelDnssd::OnTrelServiceInstanceAdded(const Mdns::Publisher::DiscoveredInst
         // If there are multiple addresses, we prefer the address
         // which is numerically smallest. This prefers GUA over ULA
         // (`fc00::/7`) and then link-local (`fe80::/10`).
+
+        // Filter anycast address due to issue b/322732845
+        // Anycast definition: https://datatracker.ietf.org/doc/html/rfc2373#section-2.6.1
+        // Here will check last 64 bits for OT
+
+        isAnycast = true;
+        addrSuffix = (uint8_t*) addr.ToString().c_str();
+
+        for (int i = firstBytePos; i < 16; ++i)
+        {
+            if (addrSuffix[i] != 0)
+            {
+                isAnycast = false;
+                break;
+            }
+        }
+
+        if (isAnycast == true)
+        {
+            continue;
+        }
 
         if (selectedAddress.IsUnspecified() || (addr < selectedAddress))
         {
