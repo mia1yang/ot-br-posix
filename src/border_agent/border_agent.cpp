@@ -104,6 +104,11 @@ enum : uint8_t
     kAvailabilityHigh       = 1,
 };
 
+#if OTBR_EPSKC_ENABLE
+    kEPSKcNotSupported = 0;
+    kEPSKcSupported = 1;
+#endif
+
 struct StateBitmap
 {
     uint32_t mConnectionMode : 3;
@@ -111,6 +116,9 @@ struct StateBitmap
     uint32_t mAvailability : 2;
     uint32_t mBbrIsActive : 1;
     uint32_t mBbrIsPrimary : 1;
+#if OTBR_EPSKC_ENABLE
+    uint32_t mEPSKcSupported : 1;
+#endif
 
     StateBitmap(void)
         : mConnectionMode(0)
@@ -118,6 +126,9 @@ struct StateBitmap
         , mAvailability(0)
         , mBbrIsActive(0)
         , mBbrIsPrimary(0)
+#if OTBR_EPSKC_ENABLE
+        , mEPSKcSupported(0)
+#endif
     {
     }
 
@@ -130,7 +141,9 @@ struct StateBitmap
         bitmap |= mAvailability << 5;
         bitmap |= mBbrIsActive << 7;
         bitmap |= mBbrIsPrimary << 8;
-
+#if OTBR_EPSKC_ENABLE
+        bitmap |= mEPSKcSupported << 11;
+#endif
         return bitmap;
     }
 };
@@ -259,6 +272,10 @@ StateBitmap GetStateBitmap(otInstance &aInstance)
 
     state.mConnectionMode = kConnectionModePskc;
     state.mAvailability   = kAvailabilityHigh;
+
+#if OTBR_EPSKC_ENABLE
+    state.mEPSKcSupported = kEPSKcSupported;
+#if OTBR_EPSKC_ENABLE
 
     switch (otThreadGetDeviceRole(&aInstance))
     {
