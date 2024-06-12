@@ -372,6 +372,18 @@ public:
     ClientError SetNat64Enabled(bool aEnabled);
 
     /**
+     * This method sets the Thread Admin Passcode switch.
+     *
+     * @param[in] aEnable  A boolean to enable/disable the TAP.
+     *
+     * @retval ERROR_NONE  Successfully performed the dbus function call
+     * @retval ERROR_DBUS  dbus encode/decode error
+     * @retval ...         OpenThread defined error value otherwise
+     *
+     */
+    ClientError SetAdminPasscodeEnabled(bool aEnabled);
+
+    /**
      * This method gets the link operating mode.
      *
      * @param[out] aConfig  The operating mode config.

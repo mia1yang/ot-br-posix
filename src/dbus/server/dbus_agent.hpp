@@ -63,7 +63,7 @@ public:
      * @param[in] aPublisher      A reference to the MDNS publisher.
      *
      */
-    DBusAgent(otbr::Ncp::ThreadHost &aHost, Mdns::Publisher &aPublisher);
+    DBusAgent(otbr::Ncp::ThreadHost &aHost, otbr::BorderAgent &aBorderAgent, Mdns::Publisher &aPublisher);
 
     /**
      * This method initializes the dbus agent.
@@ -90,6 +90,7 @@ private:
     std::unique_ptr<DBusObject> mThreadObject;
     UniqueDBusConnection        mConnection;
     otbr::Ncp::ThreadHost      &mHost;
+    otbr::BorderAgent          &mBorderAgent;
     Mdns::Publisher            &mPublisher;
 
     /**

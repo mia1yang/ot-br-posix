@@ -68,9 +68,6 @@ Application::Application(const std::string               &aInterfaceName,
 #if OTBR_ENABLE_MDNS
     , mPublisher(Mdns::Publisher::Create([this](Mdns::Publisher::State aState) { this->HandleMdnsState(aState); }))
 #endif
-#if OTBR_ENABLE_DBUS_SERVER && OTBR_ENABLE_BORDER_AGENT
-    , mDBusAgent(MakeUnique<DBus::DBusAgent>(*mHost, *mPublisher))
-#endif
 #if OTBR_ENABLE_VENDOR_SERVER
     , mVendorServer(vendor::VendorServer::newInstance(*this))
 #endif
@@ -80,6 +77,9 @@ Application::Application(const std::string               &aInterfaceName,
         CreateRcpMode(aRestListenAddress, aRestListenPort);
     }
 }
+#if OTBR_ENABLE_DBUS_SERVER && OTBR_ENABLE_BORDER_AGENT
+    , mDBusAgent(MakeUnique<DBus::DBusAgent>(*mHost, *mBorderAgent, *mPublisher))
+#endif
 
 void Application::Init(void)
 {

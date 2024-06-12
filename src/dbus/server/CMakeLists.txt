@@ -50,6 +50,7 @@ target_include_directories(otbr-dbus-server PRIVATE
 add_dependencies(otbr-dbus-server otbr-dbus-introspect-header)
 
 target_link_libraries(otbr-dbus-server PUBLIC
+    $<$<BOOL:${OTBR_MDNS}>:otbr-mdns>
     otbr-dbus-common
     otbr-proto
 )

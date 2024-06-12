@@ -46,6 +46,7 @@
 #include <openthread/instance.h>
 #include <openthread/openthread-system.h>
 
+#include "border_agent/border_agent.hpp"
 #include "common/mainloop.hpp"
 #include "common/task_runner.hpp"
 #include "common/types.hpp"

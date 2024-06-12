@@ -45,6 +45,7 @@
 #include <openthread/trel.h>
 #include <openthread/platform/radio.h>
 
+#include "border_agent/border_agent.hpp"
 #include "common/api_strings.hpp"
 #include "common/byteswap.hpp"
 #include "common/code_utils.hpp"
@@ -93,9 +94,11 @@ namespace DBus {
 DBusThreadObjectRcp::DBusThreadObjectRcp(DBusConnection     &aConnection,
                                          const std::string  &aInterfaceName,
                                          otbr::Ncp::RcpHost &aHost,
+                                         otbr::BorderAgent  *aBorderAgent,
                                          Mdns::Publisher    *aPublisher)
     : DBusObject(&aConnection, OTBR_DBUS_OBJECT_PREFIX + aInterfaceName)
     , mHost(aHost)
+    , mBorderAgent(aBorderAgent)
     , mPublisher(aPublisher)
 {
 }
@@ -150,6 +153,8 @@ otbrError DBusThreadObjectRcp::Init(void)
                    std::bind(&DBusThreadObjectRcp::LeaveNetworkHandler, this, _1));
     RegisterMethod(OTBR_DBUS_THREAD_INTERFACE, OTBR_DBUS_SET_NAT64_ENABLED_METHOD,
                    std::bind(&DBusThreadObjectRcp::SetNat64Enabled, this, _1));
+    RegisterMethod(OTBR_DBUS_THREAD_INTERFACE, OTBR_DBUS_SET_ADMIN_PASSCODE_ENABLED_METHOD,
+                   std::bind(&DBusThreadObjectRcp::SetAdminPasscodeEnabled, this, _1));                 
 
     RegisterMethod(DBUS_INTERFACE_INTROSPECTABLE, DBUS_INTROSPECT_METHOD,
                    std::bind(&DBusThreadObjectRcp::IntrospectHandler, this, _1));
@@ -1956,6 +1961,24 @@ otError DBusThreadObjectRcp::SetNat64Cidr(DBusMessageIter &aIter)
     return OT_ERROR_NOT_IMPLEMENTED;
 }
 #endif // OTBR_ENABLE_NAT64
+
+void DBusThreadObjectRcp::SetAdminPasscodeEnabled(DBusRequest &aRequest)
+{
+#if OTBR_ENABLE_EPSKC
+    otError error = OT_ERROR_NONE;
+    bool    enable;
+    auto    args = std::tie(enable);
+
+    VerifyOrExit(DBusMessageToTuple(*aRequest.GetMessage(), args) == OTBR_ERROR_NONE, error = OT_ERROR_INVALID_ARGS);
+    mBorderAgent->SetEpskcEnabled(enable);
+
+exit:
+    return otError;
+#else
+    OTBR_UNUSED_VARIABLE(aIter);
+    return OT_ERROR_NOT_IMPLEMENTED;
+#endif
+}
 
 otError DBusThreadObjectRcp::GetInfraLinkInfo(DBusMessageIter &aIter)
 {
