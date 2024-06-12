@@ -177,7 +177,7 @@ void RcpHost::Init(void)
     otbrError  error = OTBR_ERROR_NONE;
     otLogLevel level = ConvertToOtLogLevel(otbrLogGetLevel());
 
-#if OTBR_ENABLE_FEATURE_FLAGS && OTBR_ENABLE_TREL
+#if OTBR_ENABLE_FEATURE_FLAGS && ( OTBR_ENABLE_TREL || OTBR_ENABLE_EPSKC )
     FeatureFlagList featureFlagList;
 #endif
 
@@ -196,6 +196,11 @@ void RcpHost::Init(void)
 #if OTBR_ENABLE_FEATURE_FLAGS && OTBR_ENABLE_TREL
     // Enable/Disable trel according to feature flag default value.
     otTrelSetEnabled(mInstance, featureFlagList.enable_trel());
+#endif
+
+#if OTBR_ENABLE_FEATURE_FLAGS && OTBR_ENABLE_EPSKC
+    SetEpskcEnabled(featureFlagList.enable_ephemeralkey());
+    otbrLogInfo("BA Epskc Feature has been %sabled in init", (featureFlagList.enable_ephemeralkey() ? "en" : "dis"));
 #endif
 
 #if OTBR_ENABLE_SRP_ADVERTISING_PROXY
@@ -258,6 +263,10 @@ otError RcpHost::ApplyFeatureFlagList(const FeatureFlagList &aFeatureFlagList)
 #endif
 #if OTBR_ENABLE_LINK_METRICS_TELEMETRY
     otLinkMetricsManagerSetEnabled(mInstance, aFeatureFlagList.enable_link_metrics_manager());
+#endif
+#if OTBR_ENABLE_EPSKC
+    SetEpskcEnabled(aFeatureFlagList.enable_ephemeralkey());
+    otbrLogInfo("BA Epskc Feature has been %sabled by dbus control", (aFeatureFlagList.enable_ephemeralkey() ? "en" : "dis"));
 #endif
 
     return error;

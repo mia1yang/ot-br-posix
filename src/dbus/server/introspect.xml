@@ -231,6 +231,10 @@
       <arg name="enable" type="b" direction="in"/>
     </method>
 
+    <method name="SetAdminPasscodeEnabled">
+      <arg name="enable" type="b" direction="in"/>
+    </method>
+
     <!-- MeshLocalPrefix: The /64 mesh-local prefix.  -->
     <property name="MeshLocalPrefix" type="ay" access="readwrite">
       <annotation name="org.freedesktop.DBus.Property.EmitsChangedSignal" value="false"/>

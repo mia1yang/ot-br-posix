@@ -40,6 +40,7 @@
 
 #include <openthread/link.h>
 
+#include "border_agent/border_agent.hpp"
 #include "dbus/server/dbus_object.hpp"
 #include "mdns/mdns.hpp"
 #include "ncp/rcp_host.hpp"
@@ -71,6 +72,7 @@ public:
     DBusThreadObjectRcp(DBusConnection     &aConnection,
                         const std::string  &aInterfaceName,
                         otbr::Ncp::RcpHost &aHost,
+                        otbr::BorderAgent  &aBorderAgent,
                         Mdns::Publisher    *aPublisher);
 
     otbrError Init(void) override;
@@ -104,6 +106,7 @@ private:
     void GetPropertiesHandler(DBusRequest &aRequest);
     void LeaveNetworkHandler(DBusRequest &aRequest);
     void SetNat64Enabled(DBusRequest &aRequest);
+    void SetAdminPasscodeEnabled(DBusRequest &aRequest);
 
     void IntrospectHandler(DBusRequest &aRequest);
 
@@ -177,6 +180,7 @@ private:
 
     otbr::Ncp::RcpHost                                  &mHost;
     std::unordered_map<std::string, PropertyHandlerType> mGetPropertyHandlers;
+    otbr::BorderAgent                                   &mBorderAgent;
     otbr::Mdns::Publisher                               *mPublisher;
 };
 
