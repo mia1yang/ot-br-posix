@@ -130,7 +130,7 @@ struct StateBitmap
         , mBbrIsActive(0)
         , mBbrIsPrimary(0)
         , mThreadRole(kThreadRoleDisabledOrDetached)
-        , mEpskcSupported(OTBR_ENABLE_EPSKC)
+        , mEpskcSupported(0)
     {
     }
 
@@ -207,6 +207,16 @@ exit:
     return;
 }
 
+void BorderAgent::SetEpskcEnabled(bool aIsEnabled)
+{
+    VerifyOrExit(IsEpskcEnabled() != aIsEnabled);
+    mIsEpskcEnabled = aIsEnabled;
+    UpdateMeshCopService();
+
+exit:
+    return;
+}
+
 void BorderAgent::Start(void)
 {
     otbrLogInfo("Start Thread Border Agent");
@@ -257,6 +267,8 @@ void BorderAgent::PublishEpskcService()
     otbrLogInfo("Publish meshcop-e service %s.%s.local. port %d", mServiceInstanceName.c_str(),
                 kBorderAgentEpskcServiceType, port);
 
+    VerifyOrExit(IsEpskcEnabled() == true);
+
     mPublisher.PublishService(/* aHostName */ "", mServiceInstanceName, kBorderAgentEpskcServiceType,
                               Mdns::Publisher::SubTypeList{}, port, /* aTxtData */ {}, [this](otbrError aError) {
                                   if (aError == OTBR_ERROR_ABORTED)
@@ -284,6 +296,8 @@ void BorderAgent::PublishEpskcService()
                                       PublishEpskcService();
                                   }
                               });
+exit:
+    return;
 }
 
 void BorderAgent::UnpublishEpskcService()
@@ -497,6 +511,7 @@ void BorderAgent::PublishMeshCopService(void)
     txtList.emplace_back("xa", extAddr->m8, sizeof(extAddr->m8));
 
     state       = GetStateBitmap(*instance);
+    state.mEpskcSupported = (IsEpskcEnabled() ? 1 : 0);
     stateUint32 = htobe32(state.ToUint32());
     txtList.emplace_back("sb", reinterpret_cast<uint8_t *>(&stateUint32), sizeof(stateUint32));
 

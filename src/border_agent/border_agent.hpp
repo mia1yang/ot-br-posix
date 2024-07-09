@@ -127,6 +127,14 @@ public:
     void SetEnabled(bool aIsEnabled);
 
     /**
+     * This method enables/disables the Border Agent ePSKc feature.
+     *
+     * @param[in] aIsEnabled  Whether to enable the BA ePSKc feature.
+     *
+     */
+    void SetEpskcEnabled(bool aIsEnabled);
+
+    /**
      * This method handles mDNS publisher's state changes.
      *
      * @param[in] aState  The state of mDNS publisher.
@@ -138,6 +146,7 @@ private:
     void Start(void);
     void Stop(void);
     bool IsEnabled(void) const { return mIsEnabled; }
+    bool IsEpskcEnabled(void) const { return mIsEpskcEnabled; }
     void PublishMeshCopService(void);
     void UpdateMeshCopService(void);
     void UnpublishMeshCopService(void);
@@ -158,6 +167,7 @@ private:
     otbr::Ncp::RcpHost &mHost;
     Mdns::Publisher    &mPublisher;
     bool                mIsEnabled;
+    bool                mIsEpskcEnabled;
 
     std::map<std::string, std::vector<uint8_t>> mMeshCopTxtUpdate;
 

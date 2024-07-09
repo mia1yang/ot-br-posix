@@ -63,7 +63,7 @@ public:
      * @param[in] aPublisher      A reference to the MDNS publisher.
      *
      */
-    DBusAgent(otbr::Ncp::ThreadHost &aHost, Mdns::Publisher &aPublisher);
+    DBusAgent(otbr::Ncp::ThreadHost &aHost, Mdns::Publisher &aPublisher, otbr::BorderAgent &aBorderAgent);
 
     /**
      * This method initializes the dbus agent.
@@ -91,6 +91,7 @@ private:
     UniqueDBusConnection        mConnection;
     otbr::Ncp::ThreadHost      &mHost;
     Mdns::Publisher            &mPublisher;
+    otbr::BorderAgent          &mBorderAgent;
 
     /**
      * This map is used to track DBusWatch-es.
