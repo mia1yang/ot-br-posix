@@ -42,6 +42,8 @@
 #include <string>
 #include <vector>
 
+#include <openthread/error.h>
+
 #include "common/byteswap.hpp"
 
 #ifndef IN6ADDR_ANY
@@ -142,6 +144,14 @@ public:
     Ip6Address(const uint8_t (&aAddress)[16]);
 
     /**
+     * Constructor with a string.
+     *
+     * @param[in] aString The string representing the IPv6 address.
+     *
+     */
+    Ip6Address(const char *aString) { FromString(aString, *this); }
+
+    /**
      * This method overloads `<` operator and compares if the Ip6 address is smaller than the other address.
      *
      * @param[in] aOther  The other Ip6 address to compare with.
@@ -160,6 +170,16 @@ public:
      *
      */
     bool operator==(const Ip6Address &aOther) const { return m64[0] == aOther.m64[0] && m64[1] == aOther.m64[1]; }
+
+    /**
+     * This method overloads `!=` operator and compares if the Ip6 address is NOT equal to the other address.
+     *
+     * @param[in] aOther  The other Ip6 address to compare with.
+     *
+     * @returns Whether the Ip6 address is NOT equal to the other address.
+     *
+     */
+    bool operator!=(const Ip6Address &aOther) const { return !(*this == aOther); }
 
     /**
      * Retrieve the 16-bit Thread locator.
@@ -315,6 +335,43 @@ public:
     Ip6Prefix(void) { Clear(); }
 
     /**
+     * Constructor with an Ip6 address string and prefix length.
+     *
+     * @param[in] aIp6AddrStr The IPv6 address string.
+     * @param[in] aLength     The prefix length.
+     *
+     */
+    Ip6Prefix(const char *aIp6AddrStr, uint8_t aLength)
+        : mPrefix(aIp6AddrStr)
+        , mLength(aLength)
+    {
+    }
+
+    /**
+     * This method overloads `==` operator for comparing two Ip6Prefix objects by comparing their prefix and length.
+     *
+     * Two IpPrefix objects are considered equal if:
+     *  - their lengths are equal, and
+     *  - their first n-bits of the addresses are the same, where n is the length of the prefix.
+     *
+     * @param[in] aOther The Ip6Prefix object to compare with.
+     *
+     * @returns True if the two objects are equal, false otherwise.
+     *
+     */
+    bool operator==(const Ip6Prefix &aOther) const;
+
+    /**
+     * This method overloads `!=` operator for comparing two Ip6Prefix objects.
+
+     * @param[in] aOther The Ip6Prefix object to compare with.
+     *
+     * @returns True if the two objects are NOT equal, false otherwise.
+     *
+     */
+    bool operator!=(const Ip6Prefix &aOther) const;
+
+    /**
      * This method sets the Ip6 prefix to an `otIp6Prefix` value.
      *
      * @param[in] aPrefix  The `otIp6Prefix` value to set the Ip6 prefix.
@@ -343,6 +400,22 @@ public:
      *
      */
     bool IsValid(void) const { return mLength > 0 && mLength <= 128; }
+
+    /**
+     * This method checks if the object is the default route prefix ("::/0")
+     *
+     * @returns true if the object is the default route prefix, false otherwise.
+     *
+     */
+    bool IsDefaultRoutePrefix(void) const { return (*this == Ip6Prefix("::", 0)); }
+
+    /**
+     * This method checks if the object is the ULA prefix ("fc00::/7")
+     *
+     * @returns true if the object is the ULA prefix, false otherwise.
+     *
+     */
+    bool IsUlaPrefix(void) const { return (*this == Ip6Prefix("fc00::", 7)); }
 
     Ip6Address mPrefix; ///< The IPv6 prefix.
     uint8_t    mLength; ///< The IPv6 prefix length (in bits).
@@ -413,6 +486,20 @@ struct MdnsTelemetryInfo
     uint32_t mHostResolutionEmaLatency;      ///< The EMA latency of host resolutions in milliseconds
     uint32_t mServiceResolutionEmaLatency;   ///< The EMA latency of service resolutions in milliseconds
 };
+
+static constexpr size_t kVendorOuiLength      = 3;
+static constexpr size_t kMaxVendorNameLength  = 24;
+static constexpr size_t kMaxProductNameLength = 24;
+
+/**
+ * This method converts a otbrError to a otError.
+ *
+ * @param[in]  aError  a otbrError code.
+ *
+ * @returns  a otError code.
+ *
+ */
+otError OtbrErrorToOtError(otbrError aError);
 
 } // namespace otbr
 

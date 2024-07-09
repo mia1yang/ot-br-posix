@@ -28,29 +28,27 @@
 
 #define OTBR_LOG_TAG "TEST"
 
-#include <CppUTest/TestHarness.h>
-
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
 
-#include "common/logging.hpp"
+#include <gtest/gtest.h>
 
-TEST_GROUP(Logging){};
+#include "common/logging.hpp"
 
 TEST(Logging, TestLoggingHigherLevel)
 {
     char ident[20];
 
     snprintf(ident, sizeof(ident), "otbr-test-%ld", clock());
-    otbrLogInit(ident, OTBR_LOG_INFO, true);
+    otbrLogInit(ident, OTBR_LOG_INFO, true, false);
     otbrLog(OTBR_LOG_DEBUG, OTBR_LOG_TAG, "cool-higher");
     otbrLogDeinit();
     sleep(0);
 
     char cmd[128];
     snprintf(cmd, sizeof(cmd), "grep '%s.*cool-higher' /var/log/syslog", ident);
-    CHECK(0 != system(cmd));
+    EXPECT_NE(system(cmd), 0);
 }
 
 TEST(Logging, TestLoggingEqualLevel)
@@ -58,7 +56,7 @@ TEST(Logging, TestLoggingEqualLevel)
     char ident[20];
 
     snprintf(ident, sizeof(ident), "otbr-test-%ld", clock());
-    otbrLogInit(ident, OTBR_LOG_INFO, true);
+    otbrLogInit(ident, OTBR_LOG_INFO, true, false);
     otbrLog(OTBR_LOG_INFO, OTBR_LOG_TAG, "cool-equal");
     otbrLogDeinit();
     sleep(0);
@@ -66,7 +64,23 @@ TEST(Logging, TestLoggingEqualLevel)
     char cmd[128];
     snprintf(cmd, sizeof(cmd), "grep '%s.*cool-equal' /var/log/syslog", ident);
     printf("CMD = %s\n", cmd);
-    CHECK(0 == system(cmd));
+    EXPECT_EQ(system(cmd), 0);
+}
+
+TEST(Logging, TestLoggingEqualLevelNoSyslog)
+{
+    char ident[20];
+
+    snprintf(ident, sizeof(ident), "otbr-test-%ld", clock());
+    otbrLogInit(ident, OTBR_LOG_INFO, true, true);
+    otbrLog(OTBR_LOG_INFO, OTBR_LOG_TAG, "cool-equal");
+    otbrLogDeinit();
+    sleep(0);
+
+    char cmd[128];
+    snprintf(cmd, sizeof(cmd), "grep '%s.*cool-equal' /var/log/syslog", ident);
+    printf("CMD = %s\n", cmd);
+    EXPECT_NE(system(cmd), 0);
 }
 
 TEST(Logging, TestLoggingLowerLevel)
@@ -75,13 +89,13 @@ TEST(Logging, TestLoggingLowerLevel)
     char cmd[128];
 
     snprintf(ident, sizeof(ident), "otbr-test-%ld", clock());
-    otbrLogInit(ident, OTBR_LOG_INFO, true);
+    otbrLogInit(ident, OTBR_LOG_INFO, true, false);
     otbrLog(OTBR_LOG_WARNING, OTBR_LOG_TAG, "cool-lower");
     otbrLogDeinit();
     sleep(0);
 
     snprintf(cmd, sizeof(cmd), "grep '%s.*cool-lower' /var/log/syslog", ident);
-    CHECK(0 == system(cmd));
+    EXPECT_EQ(system(cmd), 0);
 }
 
 TEST(Logging, TestLoggingDump)
@@ -90,7 +104,7 @@ TEST(Logging, TestLoggingDump)
     char cmd[128];
 
     snprintf(ident, sizeof(ident), "otbr-test-%ld", clock());
-    otbrLogInit(ident, OTBR_LOG_DEBUG, true);
+    otbrLogInit(ident, OTBR_LOG_DEBUG, true, false);
     const char s[] = "one super long string with lots of text";
     otbrDump(OTBR_LOG_INFO, "Test", "foobar", s, sizeof(s));
     otbrLogDeinit();
@@ -105,12 +119,12 @@ TEST(Logging, TestLoggingDump)
 
     snprintf(cmd, sizeof(cmd),
              "grep '%s.*: foobar: 0000: 6f 6e 65 20 73 75 70 65 72 20 6c 6f 6e 67 20 73' /var/log/syslog", ident);
-    CHECK(0 == system(cmd));
+    EXPECT_EQ(system(cmd), 0);
 
     snprintf(cmd, sizeof(cmd),
              "grep '%s.*: foobar: 0010: 74 72 69 6e 67 20 77 69 74 68 20 6c 6f 74 73 20' /var/log/syslog", ident);
-    CHECK(0 == system(cmd));
+    EXPECT_EQ(system(cmd), 0);
 
     snprintf(cmd, sizeof(cmd), "grep '%s.*: foobar: 0020: 6f 66 20 74 65 78 74 00' /var/log/syslog", ident);
-    CHECK(0 == system(cmd));
+    EXPECT_EQ(system(cmd), 0);
 }

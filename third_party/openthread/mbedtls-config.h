@@ -52,6 +52,7 @@
 #define MBEDTLS_ASN1_PARSE_C
 #define MBEDTLS_ASN1_WRITE_C
 #define MBEDTLS_BIGNUM_C
+#define MBEDTLS_CAN_ECDH
 #define MBEDTLS_CCM_C
 #define MBEDTLS_CIPHER_C
 #define MBEDTLS_CTR_DRBG_C
@@ -63,6 +64,7 @@
 #define MBEDTLS_MD_C
 #define MBEDTLS_OID_C
 #define MBEDTLS_PK_C
+#define MBEDTLS_PK_HAVE_ECC_KEYS
 #define MBEDTLS_PK_PARSE_C
 #define MBEDTLS_SHA256_C
 #define MBEDTLS_SHA256_SMALLER
@@ -82,6 +84,7 @@
 #define MBEDTLS_ECDSA_DETERMINISTIC
 #define MBEDTLS_OID_C
 #define MBEDTLS_PEM_PARSE_C
+#define MBEDTLS_PK_CAN_ECDSA_SIGN
 #define MBEDTLS_PK_WRITE_C
 
 #define MBEDTLS_X509_USE_C
@@ -100,6 +103,10 @@
 
 #define MBEDTLS_SSL_CIPHERSUITES MBEDTLS_TLS_ECJPAKE_WITH_AES_128_CCM_8
 
-#include "mbedtls/check_config.h"
+#include "mbedtls/version.h"
+#if (MBEDTLS_VERSION_NUMBER < 0x03000000)
+    // Configuration sanity check. Done automatically in Mbed TLS >= 3.0.
+    #include "mbedtls/check_config.h"
+#endif
 
 #endif // OTBR_MBEDTLS_CONFIG_H_

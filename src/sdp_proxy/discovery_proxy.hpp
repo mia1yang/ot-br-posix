@@ -48,7 +48,7 @@
 
 #include "common/dns_utils.hpp"
 #include "mdns/mdns.hpp"
-#include "ncp/ncp_openthread.hpp"
+#include "ncp/rcp_host.hpp"
 
 namespace otbr {
 namespace Dnssd {
@@ -63,23 +63,33 @@ public:
     /**
      * This constructor initializes the Discovery Proxy instance.
      *
-     * @param[in] aNcp        A reference to the OpenThread Controller instance.
+     * @param[in] aHost       A reference to the OpenThread Controller instance.
      * @param[in] aPublisher  A reference to the mDNS Publisher.
      *
      */
-    explicit DiscoveryProxy(Ncp::ControllerOpenThread &aNcp, Mdns::Publisher &aPublisher);
+    explicit DiscoveryProxy(Ncp::RcpHost &aHost, Mdns::Publisher &aPublisher);
 
     /**
-     * This method starts the Discovery Proxy.
+     * This method enables/disables the Discovery Proxy.
+     *
+     * @param[in] aIsEnabled  Whether to enable the Discovery Proxy.
      *
      */
-    void Start(void);
+    void SetEnabled(bool aIsEnabled);
 
     /**
-     * This method stops the Discovery Proxy.
+     * This method handles mDNS publisher's state changes.
+     *
+     * @param[in] aState  The state of mDNS publisher.
      *
      */
-    void Stop(void);
+    void HandleMdnsState(Mdns::Publisher::State aState)
+    {
+        VerifyOrExit(IsEnabled());
+        OTBR_UNUSED_VARIABLE(aState);
+    exit:
+        return;
+    }
 
 private:
     enum : uint32_t
@@ -98,9 +108,14 @@ private:
     void OnHostDiscovered(const std::string &aHostName, const Mdns::Publisher::DiscoveredHostInfo &aHostInfo);
     static uint32_t CapTtl(uint32_t aTtl);
 
-    Ncp::ControllerOpenThread &mNcp;
-    Mdns::Publisher           &mMdnsPublisher;
-    uint64_t                   mSubscriberId = 0;
+    void Start(void);
+    void Stop(void);
+    bool IsEnabled(void) const { return mIsEnabled; }
+
+    Ncp::RcpHost    &mHost;
+    Mdns::Publisher &mMdnsPublisher;
+    bool             mIsEnabled;
+    uint64_t         mSubscriberId = 0;
 };
 
 } // namespace Dnssd
