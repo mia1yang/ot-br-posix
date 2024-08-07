@@ -66,6 +66,25 @@ static const uint16_t kThreadVersion12 = 3; ///< Thread Version 1.2
 static const uint16_t kThreadVersion13 = 4; ///< Thread Version 1.3
 static const uint16_t kThreadVersion14 = 5; ///< Thread Version 1.4
 
+// =============================== OtNetworkProperties ===============================
+
+OtNetworkProperties::OtNetworkProperties(void)
+    : mInstance(nullptr)
+{
+}
+
+otDeviceRole OtNetworkProperties::GetDeviceRole(void) const
+{
+    return otThreadGetDeviceRole(mInstance);
+}
+
+void OtNetworkProperties::SetInstance(otInstance *aInstance)
+{
+    mInstance = aInstance;
+}
+
+// =============================== RcpHost ===============================
+
 RcpHost::RcpHost(const char                      *aInterfaceName,
                  const std::vector<const char *> &aRadioUrls,
                  const char                      *aBackboneInterfaceName,
@@ -221,10 +240,12 @@ void RcpHost::Init(void)
 #endif
 #endif // OTBR_ENABLE_FEATURE_FLAGS
 
-    mThreadHelper = std::unique_ptr<otbr::agent::ThreadHelper>(new otbr::agent::ThreadHelper(mInstance, this));
+    mThreadHelper = MakeUnique<otbr::agent::ThreadHelper>(mInstance, this);
+
+    OtNetworkProperties::SetInstance(mInstance);
 
 exit:
-    SuccessOrDie(error, "Failed to initialize NCP!");
+    SuccessOrDie(error, "Failed to initialize the RCP Host!");
 }
 
 #if OTBR_ENABLE_FEATURE_FLAGS
@@ -271,6 +292,7 @@ void RcpHost::Deinit(void)
     otSysDeinit();
     mInstance = nullptr;
 
+    OtNetworkProperties::SetInstance(nullptr);
     mThreadStateChangedCallbacks.clear();
     mResetHandlers.clear();
 }
@@ -372,10 +394,18 @@ const char *RcpHost::GetThreadVersion(void)
     return version;
 }
 
-void RcpHost::GetDeviceRole(const DeviceRoleHandler aHandler)
+void RcpHost::Join(const otOperationalDatasetTlvs &aActiveOpDatasetTlvs, const AsyncResultReceiver &aReceiver)
 {
-    otDeviceRole role = otThreadGetDeviceRole(mInstance);
-    aHandler(OT_ERROR_NONE, role);
+    OT_UNUSED_VARIABLE(aActiveOpDatasetTlvs);
+
+    // TODO: Implement Join under RCP mode.
+    mTaskRunner.Post([aReceiver](void) { aReceiver(OT_ERROR_NOT_IMPLEMENTED, "Not implemented!"); });
+}
+
+void RcpHost::Leave(const AsyncResultReceiver &aReceiver)
+{
+    // TODO: Implement Leave under RCP mode.
+    mTaskRunner.Post([aReceiver](void) { aReceiver(OT_ERROR_NOT_IMPLEMENTED, "Not implemented!"); });
 }
 
 /*

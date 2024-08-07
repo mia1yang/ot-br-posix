@@ -35,6 +35,7 @@
 #define OTBR_AGENT_NCP_SPINEL_HPP_
 
 #include <functional>
+#include <memory>
 
 #include <openthread/dataset.h>
 #include <openthread/error.h>
@@ -42,12 +43,38 @@
 #include <openthread/thread.h>
 
 #include "lib/spinel/spinel.h"
+#include "lib/spinel/spinel_buffer.hpp"
 #include "lib/spinel/spinel_driver.hpp"
+#include "lib/spinel/spinel_encoder.hpp"
 
 #include "common/task_runner.hpp"
+#include "common/types.hpp"
+#include "ncp/async_task.hpp"
 
 namespace otbr {
 namespace Ncp {
+
+/**
+ * This interface is an observer to subscribe the network properties from NCP.
+ *
+ */
+class PropsObserver
+{
+public:
+    /**
+     * Updates the device role.
+     *
+     * @param[in] aRole  The device role.
+     *
+     */
+    virtual void SetDeviceRole(otDeviceRole aRole) = 0;
+
+    /**
+     * The destructor.
+     *
+     */
+    virtual ~PropsObserver(void) = default;
+};
 
 /**
  * The class provides methods for controlling the Thread stack on the network co-processor (NCP).
@@ -56,8 +83,6 @@ namespace Ncp {
 class NcpSpinel
 {
 public:
-    using GetDeviceRoleHandler = std::function<void(otError, otDeviceRole)>;
-
     /**
      * Constructor.
      *
@@ -68,9 +93,10 @@ public:
      * Do the initialization.
      *
      * @param[in]  aSpinelDriver   A reference to the SpinelDriver instance that this object depends.
+     * @param[in]  aObserver       A reference to the Network properties observer.
      *
      */
-    void Init(ot::Spinel::SpinelDriver &aSpinelDriver);
+    void Init(ot::Spinel::SpinelDriver &aSpinelDriver, PropsObserver &aObserver);
 
     /**
      * Do the de-initialization.
@@ -85,15 +111,62 @@ public:
     const char *GetCoprocessorVersion(void) { return mSpinelDriver->GetVersion(); }
 
     /**
-     * This method gets the device role and return the role through the handler.
+     * This method sets the active dataset on the NCP.
      *
-     * If this method is called again before the handler is called, the previous handler will be
-     * overridden and there will be only one call to the latest handler.
+     * If this method is called again before the previous call completed, no action will be taken.
+     * The new receiver @p aAsyncTask will be set a result OT_ERROR_BUSY.
      *
-     * @param[in]  aHandler   A handler to return the role.
+     * @param[in] aActiveOpDatasetTlvs  A reference to the active operational dataset of the Thread network.
+     * @param[in] aAsyncTask            A pointer to an async result to receive the result of this operation.
      *
      */
-    void GetDeviceRole(GetDeviceRoleHandler aHandler);
+    void DatasetSetActiveTlvs(const otOperationalDatasetTlvs &aActiveOpDatasetTlvs, AsyncTaskPtr aAsyncTask);
+
+    /**
+     * This method enableds/disables the IP6 on the NCP.
+     *
+     * If this method is called again before the previous call completed, no action will be taken.
+     * The new receiver @p aAsyncTask will be set a result OT_ERROR_BUSY.
+     *
+     * @param[in] aEnable     TRUE to enable and FALSE to disable.
+     * @param[in] aAsyncTask  A pointer to an async result to receive the result of this operation.
+     *
+     */
+    void Ip6SetEnabled(bool aEnable, AsyncTaskPtr aAsyncTask);
+
+    /**
+     * This method enableds/disables the Thread network on the NCP.
+     *
+     * If this method is called again before the previous call completed, no action will be taken.
+     * The new receiver @p aAsyncTask will be set a result OT_ERROR_BUSY.
+     *
+     * @param[in] aEnable     TRUE to enable and FALSE to disable.
+     * @param[in] aAsyncTask  A pointer to an async result to receive the result of this operation.
+     *
+     */
+    void ThreadSetEnabled(bool aEnable, AsyncTaskPtr aAsyncTask);
+
+    /**
+     * This method instructs the device to leave the current network gracefully.
+     *
+     * If this method is called again before the previous call completed, no action will be taken.
+     * The new receiver @p aAsyncTask will be set a result OT_ERROR_BUSY.
+     *
+     * @param[in] aAsyncTask  A pointer to an async result to receive the result of this operation.
+     *
+     */
+    void ThreadDetachGracefully(AsyncTaskPtr aAsyncTask);
+
+    /**
+     * This method instructs the NCP to erase the persistent network info.
+     *
+     * If this method is called again before the previous call completed, no action will be taken.
+     * The new receiver @p aAsyncTask will be set a result OT_ERROR_BUSY.
+     *
+     * @param[in] aAsyncTask  A pointer to an async result to receive the result of this operation.
+     *
+     */
+    void ThreadErasePersistentInfo(AsyncTaskPtr aAsyncTask);
 
 private:
     using FailureHandler = std::function<void(otError)>;
@@ -106,6 +179,15 @@ private:
         {
             aFunc(std::forward<Args>(aArgs)...);
             aFunc = nullptr;
+        }
+    }
+
+    static void CallAndClear(AsyncTaskPtr &aResult, otError aError, const std::string &aErrorInfo = "")
+    {
+        if (aResult)
+        {
+            aResult->SetResult(aError, aErrorInfo);
+            aResult = nullptr;
         }
     }
 
@@ -124,19 +206,42 @@ private:
     void HandleNotification(const uint8_t *aFrame, uint16_t aLength);
     void HandleResponse(spinel_tid_t aTid, const uint8_t *aFrame, uint16_t aLength);
     void HandleValueIs(spinel_prop_key_t aKey, const uint8_t *aBuffer, uint16_t aLength);
+    void HandleResponseForCommand(spinel_tid_t aTid, otError aError);
 
     spinel_tid_t GetNextTid(void);
     void         FreeTid(spinel_tid_t tid) { mCmdTidsInUse &= ~(1 << tid); }
 
-    ot::Spinel::SpinelDriver *mSpinelDriver;
-    uint16_t                  mCmdTidsInUse;              ///< Used transaction ids.
-    spinel_tid_t              mCmdNextTid;                ///< Next available transaction id.
-    spinel_prop_key_t         mWaitingKeyTable[kMaxTids]; ///< The property keys of ongoing transactions.
+    using EncodingFunc = std::function<otError(void)>;
+    otError SetProperty(spinel_prop_key_t aKey, const EncodingFunc &aEncodingFunc);
+    otError SendEncodedFrame(void);
 
-    otDeviceRole         mDeviceRole;
-    GetDeviceRoleHandler mGetDeviceRoleHandler;
+    void GetFlagsFromSecurityPolicy(const otSecurityPolicy *aSecurityPolicy, uint8_t *aFlags, uint8_t aFlagsLength);
+
+    otError EncodeDatasetSetActiveTlvs(const otOperationalDatasetTlvs &aActiveOpDatasetTlvs);
+
+    ot::Spinel::SpinelDriver *mSpinelDriver;
+    uint16_t                  mCmdTidsInUse; ///< Used transaction ids.
+    spinel_tid_t              mCmdNextTid;   ///< Next available transaction id.
+
+    spinel_prop_key_t mWaitingKeyTable[kMaxTids]; ///< The property keys of ongoing transactions.
+    spinel_command_t  mCmdTable[kMaxTids];        ///< The mapping of spinel command and tids when the response
+                                                  ///< is LAST_STATUS.
+
+    static constexpr uint16_t kTxBufferSize = 2048;
+    uint8_t                   mTxBuffer[kTxBufferSize];
+    ot::Spinel::Buffer        mNcpBuffer;
+    ot::Spinel::Encoder       mEncoder;
+    spinel_iid_t              mIid; /// < Interface Id used to in Spinel header
 
     TaskRunner mTaskRunner;
+
+    PropsObserver *mPropsObserver;
+
+    AsyncTaskPtr mDatasetSetActiveTask;
+    AsyncTaskPtr mIp6SetEnabledTask;
+    AsyncTaskPtr mThreadSetEnabledTask;
+    AsyncTaskPtr mThreadDetachGracefullyTask;
+    AsyncTaskPtr mThreadErasePersistentInfoTask;
 };
 
 } // namespace Ncp

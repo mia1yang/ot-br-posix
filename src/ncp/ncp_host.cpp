@@ -30,6 +30,8 @@
 
 #include "ncp_host.hpp"
 
+#include <memory>
+
 #include <openthread/error.h>
 #include <openthread/thread.h>
 
@@ -37,8 +39,29 @@
 
 #include "lib/spinel/spinel_driver.hpp"
 
+#include "ncp/async_task.hpp"
+
 namespace otbr {
 namespace Ncp {
+
+// =============================== NcpNetworkProperties ===============================
+
+NcpNetworkProperties::NcpNetworkProperties(void)
+    : mDeviceRole(OT_DEVICE_ROLE_DISABLED)
+{
+}
+
+otDeviceRole NcpNetworkProperties::GetDeviceRole(void) const
+{
+    return mDeviceRole;
+}
+
+void NcpNetworkProperties::SetDeviceRole(otDeviceRole aRole)
+{
+    mDeviceRole = aRole;
+}
+
+// ===================================== NcpHost ======================================
 
 NcpHost::NcpHost(const char *aInterfaceName, bool aDryRun)
     : mSpinelDriver(*static_cast<ot::Spinel::SpinelDriver *>(otSysGetSpinelDriver()))
@@ -57,7 +80,7 @@ const char *NcpHost::GetCoprocessorVersion(void)
 void NcpHost::Init(void)
 {
     otSysInit(&mConfig);
-    mNcpSpinel.Init(mSpinelDriver);
+    mNcpSpinel.Init(mSpinelDriver, *this);
 }
 
 void NcpHost::Deinit(void)
@@ -66,9 +89,29 @@ void NcpHost::Deinit(void)
     otSysDeinit();
 }
 
-void NcpHost::GetDeviceRole(DeviceRoleHandler aHandler)
+void NcpHost::Join(const otOperationalDatasetTlvs &aActiveOpDatasetTlvs, const AsyncResultReceiver &aReceiver)
 {
-    mNcpSpinel.GetDeviceRole(aHandler);
+    AsyncTaskPtr task;
+    auto errorHandler = [aReceiver](otError aError, const std::string &aErrorInfo) { aReceiver(aError, aErrorInfo); };
+
+    task = std::make_shared<AsyncTask>(errorHandler);
+    task->First([this, aActiveOpDatasetTlvs](AsyncTaskPtr aNext) {
+            mNcpSpinel.DatasetSetActiveTlvs(aActiveOpDatasetTlvs, std::move(aNext));
+        })
+        ->Then([this](AsyncTaskPtr aNext) { mNcpSpinel.Ip6SetEnabled(true, std::move(aNext)); })
+        ->Then([this](AsyncTaskPtr aNext) { mNcpSpinel.ThreadSetEnabled(true, std::move(aNext)); });
+    task->Run();
+}
+
+void NcpHost::Leave(const AsyncResultReceiver &aReceiver)
+{
+    AsyncTaskPtr task;
+    auto errorHandler = [aReceiver](otError aError, const std::string &aErrorInfo) { aReceiver(aError, aErrorInfo); };
+
+    task = std::make_shared<AsyncTask>(errorHandler);
+    task->First([this](AsyncTaskPtr aNext) { mNcpSpinel.ThreadDetachGracefully(std::move(aNext)); })
+        ->Then([this](AsyncTaskPtr aNext) { mNcpSpinel.ThreadErasePersistentInfo(std::move(aNext)); });
+    task->Run();
 }
 
 void NcpHost::Process(const MainloopContext &aMainloop)
