@@ -22,7 +22,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">openthread-br
-   &#160;<span id="projectnumber">0.3.0-2d5425a</span>
+   &#160;<span id="projectnumber">0.3.0-ed75573</span>
    </div>
   </td>
  </tr>
@@ -93,6 +93,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a3fa72b202e6979b62b561f9438e7e376"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:affc077ed4545cc1348d0c48bb7c84dfb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dfd/classotbr_1_1BorderAgent.html#affc077ed4545cc1348d0c48bb7c84dfb">SetEnabled</a> (bool aIsEnabled)</td></tr>
 <tr class="separator:affc077ed4545cc1348d0c48bb7c84dfb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af4656bc92ad466131bc9db31429f5a2d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dfd/classotbr_1_1BorderAgent.html#af4656bc92ad466131bc9db31429f5a2d">SetEphemeralKeyEnabled</a> (bool aIsEnabled)</td></tr>
+<tr class="separator:af4656bc92ad466131bc9db31429f5a2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a37e820aa1a726655846149b1f4ccb8c5"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dfd/classotbr_1_1BorderAgent.html#a37e820aa1a726655846149b1f4ccb8c5">GetEphemeralKeyEnabled</a> (void) const</td></tr>
+<tr class="separator:a37e820aa1a726655846149b1f4ccb8c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6efea6841bdd6c1d9544d92641e45e61"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/dfd/classotbr_1_1BorderAgent.html#a6efea6841bdd6c1d9544d92641e45e61">HandleMdnsState</a> (<a class="el" href="../../da/ddc/classotbr_1_1Mdns_1_1Publisher.html#a33836f14c4f81a2487616acc08296fa4">Mdns::Publisher::State</a> aState)</td></tr>
 <tr class="separator:a6efea6841bdd6c1d9544d92641e45e61"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -136,6 +140,33 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a37e820aa1a726655846149b1f4ccb8c5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a37e820aa1a726655846149b1f4ccb8c5">&#9670;&nbsp;</a></span>GetEphemeralKeyEnabled()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool otbr::BorderAgent::GetEphemeralKeyEnabled </td>
+          <td>(</td>
+          <td class="paramtype">void&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>This method returns the Border Agent Ephemeral Key feature state. </p>
+
+</div>
+</div>
 <a id="a6efea6841bdd6c1d9544d92641e45e61"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6efea6841bdd6c1d9544d92641e45e61">&#9670;&nbsp;</a></span>HandleMdnsState()</h2>
 
@@ -180,6 +211,31 @@ Public Member Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">aIsEnabled</td><td>Whether to enable the Border Agent. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="af4656bc92ad466131bc9db31429f5a2d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af4656bc92ad466131bc9db31429f5a2d">&#9670;&nbsp;</a></span>SetEphemeralKeyEnabled()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void otbr::BorderAgent::SetEphemeralKeyEnabled </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>aIsEnabled</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>This method enables/disables the Border Agent Ephemeral Key feature.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">aIsEnabled</td><td>Whether to enable the BA Ephemeral Key feature. </td></tr>
   </table>
   </dd>
 </dl>
